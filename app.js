@@ -1,5 +1,5 @@
 // Backend API URL (Abhi local server par chal raha hai)
-const API_URL ='https://client-shoesweb-production.up.railway.app';
+const API_URL ='https://client-shoesweb-production.up.railway.app/api/products';
 
 
 let products = [];
