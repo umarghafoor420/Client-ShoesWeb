@@ -9,7 +9,7 @@ const multer = require('multer');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors()); // Ye frontend se aane wali requests ko allow karega
 app.use(express.json());
 
 // Cloudinary Configuration
@@ -29,24 +29,24 @@ const storage = new CloudinaryStorage({
 });
 const upload = multer({ storage: storage });
 
-// FIXED MongoDB Connection
+// MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected Successfully!"))
-  .catch(err => console.log("MongoDB Connection Error: ", err));
+  .catch(err => console.error("MongoDB Connection Error: ", err));
 
 // Database Schema & Model
 const productSchema = new mongoose.Schema({
   title: String,
   price: Number,
   desc: String,
-  image: String, // Cloudinary Image URL
+  image: String,
   createdAt: { type: Date, default: Date.now }
 });
 const Product = mongoose.model('Product', productSchema);
 
 // ================= ROUTES =================
 
-// 1. Get All Products (Latest First)
+// 1. Get All Products
 app.get('/api/products', async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
@@ -56,12 +56,14 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-// 2. Add New Product (with Image Upload)
+// 2. Add New Product
 app.post('/api/products', upload.single('image'), async (req, res) => {
   try {
     const { title, price, desc } = req.body;
+    if (!req.file) {
+      return res.status(400).json({ error: "Image is required" });
+    }
     
-    // req.file.path mein Cloudinary ka live URL hoga
     const newProduct = new Product({
       title: title,
       price: price,
@@ -88,6 +90,7 @@ app.delete('/api/products/:id', async (req, res) => {
 
 // ================= START SERVER =================
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+// '0.0.0.0' zaroori hai Railway/Render jaise platforms ke liye
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
