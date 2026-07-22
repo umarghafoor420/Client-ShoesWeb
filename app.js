@@ -1,8 +1,8 @@
-// Backend API URL (Abhi local server par chal raha hai)
-const API_URL ='https://client-shoesweb-production.up.railway.app/api/products';
-
+// Backend API URL
+const API_URL = 'https://client-shoesweb-production.up.railway.app/api/products';
 
 let products = [];
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
 // Router Logic: Show Admin Panel or Main Website based on URL parameters
 document.addEventListener("DOMContentLoaded", () => {
@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     // Load products from Database on page load
     loadProducts();
+    updateCartUI();
 });
 
 // Mobile Menu
@@ -54,14 +55,17 @@ function displayProducts() {
     products.forEach((product, index) => {
         const card = document.createElement('div');
         card.className = 'product-card';
-        card.setAttribute('onclick', `openProductModal(${index})`);
+        
         card.innerHTML = `
-            <img src="${product.image}" alt="${product.title}" class="product-image" loading="lazy">
+            <img src="${product.image}" alt="${product.title}" class="product-image" loading="lazy" onclick="openProductModal(${index})" style="cursor: pointer;">
             <div class="product-info">
-                <h3 class="product-title">${product.title}</h3>
+                <h3 class="product-title" onclick="openProductModal(${index})" style="cursor: pointer;">${product.title}</h3>
                 <p class="product-price">Rs. ${product.price}</p>
                 <p class="product-desc">${product.desc}</p>
-                <button class="btn-primary" style="padding: 8px 25px; font-size:14px; margin-top:10px;">View Details</button>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button class="btn-primary" onclick="openProductModal(${index})" style="padding: 8px 15px; font-size: 13px; flex: 1;">View Details</button>
+                    <button onclick="addToCart('${product._id}')" style="background: #27ae60; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 30px; font-weight: bold; font-size: 13px; flex: 1;">Add to Cart</button>
+                </div>
             </div>
         `;
         productGrid.appendChild(card);
@@ -73,6 +77,94 @@ if(slideRightBtn) {
     slideRightBtn.addEventListener('click', () => {
         document.getElementById('product-grid').scrollBy({ left: 310, behavior: 'smooth' });
     });
+}
+
+// ================= CART SYSTEM LOGIC =================
+function addToCart(productId) {
+    const product = products.find(p => p._id === productId);
+    if (!product) return;
+
+    const existingItem = cart.find(item => item._id === productId);
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({ ...product, quantity: 1 });
+    }
+
+    saveCart();
+    updateCartUI();
+    alert(`${product.title} has been added to your cart!`);
+}
+
+function removeFromCart(productId) {
+    cart = cart.filter(item => item._id !== productId);
+    saveCart();
+    updateCartUI();
+}
+
+function saveCart() {
+    localStorage.setItem('cart', JSON.stringify(cart));
+}
+
+function updateCartUI() {
+    // Update Badge Counter
+    const cartCount = document.getElementById('cart-count');
+    if (cartCount) {
+        const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+        cartCount.innerText = totalCount;
+    }
+
+    // Update Cart Drawer Items
+    const container = document.getElementById('cart-items-container');
+    const totalContainer = document.getElementById('cart-total');
+    if (!container || !totalContainer) return;
+
+    container.innerHTML = '';
+    let totalPrice = 0;
+
+    if (cart.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #777; margin-top: 20px;">Your cart is empty.</p>';
+        totalContainer.innerText = '0';
+        return;
+    }
+
+    cart.forEach(item => {
+        totalPrice += item.price * item.quantity;
+        
+        const cartItemEl = document.createElement('div');
+        cartItemEl.className = 'cart-item';
+        
+        cartItemEl.innerHTML = `
+            <img src="${item.image}" alt="${item.title}">
+            <div class="cart-item-details">
+                <h4>${item.title}</h4>
+                <p>Rs. ${item.price} x ${item.quantity}</p>
+            </div>
+            <button class="btn-remove-cart" onclick="removeFromCart('${item._id}')">Remove</button>
+        `;
+        container.appendChild(cartItemEl);
+    });
+
+    totalContainer.innerText = totalPrice;
+}
+
+function toggleCartModal() {
+    const modal = document.getElementById('cart-modal');
+    if (modal) {
+        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    }
+}
+
+function checkout() {
+    if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+    }
+    alert('Order placed successfully! We will contact you soon.');
+    cart = [];
+    saveCart();
+    updateCartUI();
+    toggleCartModal();
 }
 
 // ================= MODALS (POPUPS) LOGIC =================
@@ -104,6 +196,8 @@ window.addEventListener('click', (e) => {
 // ================= ADMIN DASHBOARD LOGIC =================
 function renderAdminProducts() {
     const adminList = document.getElementById('admin-product-list');
+    if(!adminList) return;
+    
     adminList.innerHTML = '';
     
     if (products.length === 0) {
@@ -140,12 +234,10 @@ if (productForm) {
         const imageFile = document.getElementById('p-image').files[0];
         
         if(imageFile) {
-            // Loading alert taake pata chale upload ho raha hai
             const submitBtn = document.querySelector('#product-form button[type="submit"]');
             submitBtn.innerText = 'Uploading... Please wait';
             submitBtn.disabled = true;
 
-            // FormData banayen kyunke hum file (image) bhej rahe hain
             const formData = new FormData();
             formData.append('title', title);
             formData.append('price', price);
@@ -161,7 +253,7 @@ if (productForm) {
                 if (response.ok) {
                     alert('Zabardast! Product MongoDB mein save ho gaya hai.');
                     productForm.reset();
-                    loadProducts(); // Data dobara mangwa kar list update karo
+                    loadProducts();
                 } else {
                     alert('Error uploading product!');
                 }
@@ -185,7 +277,7 @@ window.deleteProduct = async function(id) {
             });
             
             if (response.ok) {
-                loadProducts(); // List refresh karo
+                loadProducts();
             }
         } catch (error) {
             console.error('Delete Error:', error);
