@@ -160,13 +160,14 @@ function checkout() {
         alert('Your cart is empty!');
         return;
     }
-    alert('Order placed successfully! We will contact you soon.');
-    cart = [];
-    saveCart();
-    updateCartUI();
+    // Cart drawer ko band karein
     toggleCartModal();
+    // Jo pehle se order-modal bana hua hai, usay khol dein
+    const orderModal = document.getElementById('order-modal');
+    if (orderModal) {
+        orderModal.style.display = 'flex';
+    }
 }
-
 // ================= MODALS (POPUPS) LOGIC =================
 const productModal = document.getElementById('product-modal');
 const orderModal = document.getElementById('order-modal');
