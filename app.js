@@ -162,12 +162,13 @@ function checkout() {
     }
     // Cart drawer ko band karein
     toggleCartModal();
-    // Jo pehle se order-modal bana hua hai, usay khol dein
+    // WhatsApp/Contact order modal khol dein
     const orderModal = document.getElementById('order-modal');
     if (orderModal) {
         orderModal.style.display = 'flex';
     }
 }
+
 // ================= MODALS (POPUPS) LOGIC =================
 const productModal = document.getElementById('product-modal');
 const orderModal = document.getElementById('order-modal');
@@ -179,6 +180,22 @@ window.openProductModal = function(index) {
     document.getElementById('modal-title').innerText = product.title;
     document.getElementById('modal-price').innerText = `Rs. ${product.price}`;
     document.getElementById('modal-desc').innerText = product.desc;
+    
+    // Details popup ke andar "Add to Cart" button dynamically inject karna
+    const modalInfo = document.querySelector('.modal-info');
+    if (modalInfo) {
+        let existingCartBtn = document.getElementById('modal-add-cart-btn');
+        if (!existingCartBtn) {
+            const cartBtn = document.createElement('button');
+            cartBtn.id = 'modal-add-cart-btn';
+            cartBtn.className = 'btn-primary';
+            cartBtn.style.cssText = 'background: #27ae60; color: white; margin-left: 10px; margin-top: 15px; width: 100%; border-radius: 30px;';
+            cartBtn.innerText = 'Add to Cart';
+            modalInfo.appendChild(cartBtn);
+        }
+        document.getElementById('modal-add-cart-btn').setAttribute('onclick', `addToCart('${product._id}')`);
+    }
+
     productModal.style.display = 'flex';
 }
 
