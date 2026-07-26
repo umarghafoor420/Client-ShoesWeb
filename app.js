@@ -97,7 +97,7 @@ function addToCart(productId) {
 }
 
 function removeFromCart(productId) {
-    cart = cart.filter(item => item._id !== productId);
+    cart = cart.filter(item => item !== productId);
     saveCart();
     updateCartUI();
 }
@@ -155,18 +155,103 @@ function toggleCartModal() {
     }
 }
 
+// Open Checkout Modal from Cart
 function checkout() {
     if (cart.length === 0) {
         alert('Your cart is empty!');
         return;
     }
-    // Cart drawer ko band karein
-    toggleCartModal();
-    // WhatsApp/Contact order modal khol dein
-    const orderModal = document.getElementById('order-modal');
-    if (orderModal) {
-        orderModal.style.display = 'flex';
+    toggleCartModal(); // Close cart drawer
+    const checkoutModal = document.getElementById('checkout-modal');
+    if (checkoutModal) {
+        checkoutModal.style.display = 'flex';
     }
+}
+
+// Open Checkout Modal Directly from Product Details Modal
+function openCheckoutModalDirect() {
+    const productModal = document.getElementById('product-modal');
+    if (productModal) productModal.style.display = 'none';
+
+    // Agar product details se directly order karna ho toh current product ko cart mein daal kar checkout khol dein
+    const title = document.getElementById('modal-title').innerText;
+    const product = products.find(p => p.title === title);
+    
+    if (product) {
+        // Clear cart or add single item for direct buy
+        cart = [{ ...product, quantity: 1 }];
+        saveCart();
+        updateCartUI();
+    }
+
+    const checkoutModal = document.getElementById('checkout-modal');
+    if (checkoutModal) {
+        checkoutModal.style.display = 'flex';
+    }
+}
+
+function closeCheckoutModal() {
+    const checkoutModal = document.getElementById('checkout-modal');
+    if (checkoutModal) {
+        checkoutModal.style.display = 'none';
+    }
+}
+
+// Submit Order and Forward to WhatsApp
+function submitOrderToWhatsApp(e) {
+    e.preventDefault();
+
+    const name = document.getElementById('cust-name').value;
+    const phone = document.getElementById('cust-phone').value;
+    const address = document.getElementById('cust-address').value;
+    const payAccount = document.getElementById('pay-account').value;
+    const screenshotFile = document.getElementById('pay-screenshot').files[0];
+
+    if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+    }
+
+    let orderItemsText = '';
+    let totalPrice = 0;
+
+    cart.forEach((item, index) => {
+        let itemTotal = item.price * item.quantity;
+        totalPrice += itemTotal;
+        orderItemsText += `${index + 1}. ${item.title} (Qty: ${item.quantity}) - Rs. ${itemTotal}\n`;
+    });
+
+    // Format WhatsApp Message
+    let message = `*New Order Received - Premier Foot Wear*\n\n`;
+    message += `*Customer Details:*\n`;
+    message += `• Name: ${name}\n`;
+    message += `• Phone: ${phone}\n`;
+    message += `• Address: ${address}\n\n`;
+    message += `*Order Items:*\n${orderItemsText}\n`;
+    message += `*Total Amount:* Rs. ${totalPrice}\n`;
+    message += `*Payment Account:* ${payAccount}\n`;
+    message += `*(Payment Screenshot uploaded by customer)*`;
+
+    // Determine target WhatsApp number based on selected account
+    let targetWhatsAppNumber = "923112919430"; // Default Faisal Sheikh
+    if (payAccount.includes("0335-2168822")) {
+        targetWhatsAppNumber = "923352168822"; // Waqar Sheikh
+    }
+
+    // Open WhatsApp with pre-filled message
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${targetWhatsAppNumber}?text=${encodedMessage}`;
+
+    alert('Order details prepared! Redirecting to WhatsApp to send message and screenshot.');
+    
+    // Clear cart and close modal
+    cart = [];
+    saveCart();
+    updateCartUI();
+    closeCheckoutModal();
+    document.getElementById('checkout-form').reset();
+
+    window.open(whatsappUrl, '_blank');
 }
 
 // ================= MODALS (POPUPS) LOGIC =================
@@ -184,14 +269,14 @@ window.openProductModal = function(index) {
     // Details popup ke andar "Add to Cart" button dynamically inject karna
     const modalInfo = document.querySelector('.modal-info');
     if (modalInfo) {
-        let existingCartBtn = document.getElementById('modal-add-cart-btn');
-        if (!existingCartBtn) {
-            const cartBtn = document.createElement('button');
-            cartBtn.id = 'modal-add-cart-btn';
-            cartBtn.className = 'btn-primary';
-            cartBtn.style.cssText = 'background: #27ae60; color: white; margin-left: 10px; margin-top: 15px; width: 100%; border-radius: 30px;';
-            cartBtn.innerText = 'Add to Cart';
-            modalInfo.appendChild(cartBtn);
+        let existingContainer = document.querySelector('.modal-buttons-container');
+        if (!existingContainer) {
+            const btnContainer = document.createElement('div');
+            btnContainer.className = 'modal-buttons-container';
+            btnContainer.innerHTML = `
+                <button id="modal-add-cart-btn" class="btn-primary" style="background: #27ae60; color: white;">Add to Cart</button>
+            `;
+            modalInfo.appendChild(btnContainer);
         }
         document.getElementById('modal-add-cart-btn').setAttribute('onclick', `addToCart('${product._id}')`);
     }
@@ -209,6 +294,7 @@ closeBtns.forEach(btn => {
 window.addEventListener('click', (e) => {
     if (e.target == productModal) productModal.style.display = 'none';
     if (e.target == orderModal) orderModal.style.display = 'none';
+    if (e.target == document.getElementById('checkout-modal')) closeCheckoutModal();
 });
 
 // ================= ADMIN DASHBOARD LOGIC =================
