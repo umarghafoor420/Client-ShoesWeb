@@ -12,7 +12,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('main-site').style.display = 'none'; 
         document.getElementById('admin-panel').style.display = 'block'; 
     }
-    // Load products from Database on page load
     loadProducts();
     updateCartUI();
 });
@@ -30,7 +29,6 @@ async function loadProducts() {
         const response = await fetch(API_URL);
         products = await response.json();
         
-        // Check kon sa page khula hai aur uske hisab se render karo
         if (document.getElementById('admin-panel').style.display === 'block') {
             renderAdminProducts();
         } else {
@@ -58,17 +56,24 @@ function displayProducts() {
         card.className = 'product-card';
         
         card.innerHTML = `
-            <img src="${product.image}" alt="${product.title}" class="product-image" loading="lazy" onclick="openProductModal(${index})" style="cursor: pointer;">
+            <img src="${product.image}" alt="${product.title}" class="product-image" loading="lazy" style="cursor: pointer;">
             <div class="product-info">
-                <h3 class="product-title" onclick="openProductModal(${index})" style="cursor: pointer;">${product.title}</h3>
+                <h3 class="product-title" style="cursor: pointer;">${product.title}</h3>
                 <p class="product-price">Rs. ${product.price}</p>
                 <p class="product-desc">${product.desc}</p>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button class="btn-primary" onclick="openProductModal(${index})" style="padding: 8px 15px; font-size: 13px; flex: 1;">View Details</button>
-                    <button onclick="addToCart('${product._id}')" style="background: #27ae60; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 30px; font-weight: bold; font-size: 13px; flex: 1;">Add to Cart</button>
+                    <button class="btn-primary view-details-btn" style="padding: 8px 15px; font-size: 13px; flex: 1;">View Details</button>
+                    <button class="add-cart-btn" style="background: #27ae60; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 30px; font-weight: bold; font-size: 13px; flex: 1;">Add to Cart</button>
                 </div>
             </div>
         `;
+
+        // Direct Event Listeners to ensure clicks work properly
+        card.querySelector('.product-image').addEventListener('click', () => openProductModal(index));
+        card.querySelector('.product-title').addEventListener('click', () => openProductModal(index));
+        card.querySelector('.view-details-btn').addEventListener('click', () => openProductModal(index));
+        card.querySelector('.add-cart-btn').addEventListener('click', () => addToCart(product._id));
+
         productGrid.appendChild(card);
     });
 }
@@ -108,14 +113,12 @@ function saveCart() {
 }
 
 function updateCartUI() {
-    // Update Badge Counter
     const cartCount = document.getElementById('cart-count');
     if (cartCount) {
         const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
         cartCount.innerText = totalCount;
     }
 
-    // Update Cart Drawer Items
     const container = document.getElementById('cart-items-container');
     const totalContainer = document.getElementById('cart-total');
     if (!container || !totalContainer) return;
@@ -156,26 +159,23 @@ function toggleCartModal() {
     }
 }
 
-// Open Checkout Modal from Cart Drawer
 function checkout() {
     if (cart.length === 0) {
         alert('Your cart is empty!');
         return;
     }
-    toggleCartModal(); // Close cart drawer
+    toggleCartModal();
     const checkoutModal = document.getElementById('checkout-modal');
     if (checkoutModal) {
         checkoutModal.style.display = 'flex';
     }
 }
 
-// Open Checkout Modal Directly from Product Details Modal "Place Order" button
 function openCheckoutModalDirect() {
     const productModal = document.getElementById('product-modal');
     if (productModal) productModal.style.display = 'none';
 
     if (activeModalProduct) {
-        // Is specific product ko temporary cart mein daal kar checkout khol dein
         cart = [{ ...activeModalProduct, quantity: 1 }];
         saveCart();
         updateCartUI();
@@ -217,7 +217,6 @@ function submitOrderToWhatsApp(e) {
         orderItemsText += `${index + 1}. ${item.title} (Qty: ${item.quantity}) - Rs. ${itemTotal}\n`;
     });
 
-    // Format WhatsApp Message
     let message = `*New Order Received - Premier Foot Wear*\n\n`;
     message += `*Customer Details:*\n`;
     message += `• Name: ${name}\n`;
@@ -228,10 +227,9 @@ function submitOrderToWhatsApp(e) {
     message += `*Payment Account:* ${payAccount}\n`;
     message += `*(Payment Screenshot uploaded by customer)*`;
 
-    // Determine target WhatsApp number based on selected account
-    let targetWhatsAppNumber = "923112919430"; // Faisal Sheikh
+    let targetWhatsAppNumber = "923112919430";
     if (payAccount.includes("0335-2168822")) {
-        targetWhatsAppNumber = "923352168822"; // Waqar Sheikh
+        targetWhatsAppNumber = "923352168822";
     }
 
     const encodedMessage = encodeURIComponent(message);
@@ -257,17 +255,16 @@ window.openProductModal = function(index) {
     const product = products[index];
     if (!product) return;
 
-    activeModalProduct = product; // Save active product reference for direct checkout
+    activeModalProduct = product;
 
     document.getElementById('modal-image').src = product.image;
     document.getElementById('modal-title').innerText = product.title;
     document.getElementById('modal-price').innerText = `Rs. ${product.price}`;
     document.getElementById('modal-desc').innerText = product.desc;
     
-    // Set Add to Cart button action dynamically
     const addCartBtn = document.getElementById('modal-add-cart-btn');
     if (addCartBtn) {
-        addCartBtn.setAttribute('onclick', `addToCart('${product._id}')`);
+        addCartBtn.onclick = () => addToCart(product._id);
     }
 
     productModal.style.display = 'flex';
@@ -315,7 +312,6 @@ function renderAdminProducts() {
     });
 }
 
-// Add New Product (Send to Backend)
 const productForm = document.getElementById('product-form');
 if (productForm) {
     productForm.addEventListener('submit', async function(e) {
@@ -361,11 +357,10 @@ if (productForm) {
     });
 }
 
-// Delete Product (From Backend)
 window.deleteProduct = async function(id) {
     if (confirm('Are you sure you want to delete this product?')) {
         try {
-            const response = await fetch(`${API_URL}/${id}`, {
+            const response =вал = await fetch(`${API_URL}/${id}`, {
                 method: 'DELETE'
             });
             
