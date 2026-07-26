@@ -3,6 +3,7 @@ const API_URL = 'https://client-shoesweb-production.up.railway.app/api/products'
 
 let products = [];
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
+let activeModalProduct = null;
 
 // Router Logic: Show Admin Panel or Main Website based on URL parameters
 document.addEventListener("DOMContentLoaded", () => {
@@ -169,8 +170,6 @@ function checkout() {
 }
 
 // Open Checkout Modal Directly from Product Details Modal "Place Order" button
-let activeModalProduct = null;
-
 function openCheckoutModalDirect() {
     const productModal = document.getElementById('product-modal');
     if (productModal) productModal.style.display = 'none';
@@ -256,6 +255,8 @@ const closeBtns = document.querySelectorAll('.close-btn, .close-order-btn');
 
 window.openProductModal = function(index) {
     const product = products[index];
+    if (!product) return;
+
     activeModalProduct = product; // Save active product reference for direct checkout
 
     document.getElementById('modal-image').src = product.image;
@@ -263,20 +264,10 @@ window.openProductModal = function(index) {
     document.getElementById('modal-price').innerText = `Rs. ${product.price}`;
     document.getElementById('modal-desc').innerText = product.desc;
     
-    // Details popup ke andar "Place Order" aur "Add to Cart" dono buttons ko manage karna
-    const modalInfo = document.querySelector('.modal-info');
-    if (modalInfo) {
-        let existingContainer = document.querySelector('.modal-buttons-container');
-        if (!existingContainer) {
-            const btnContainer = document.createElement('div');
-            btnContainer.className = 'modal-buttons-container';
-            btnContainer.innerHTML = `
-                <button class="btn-primary" onclick="openCheckoutModalDirect()">Place Order</button>
-                <button id="modal-add-cart-btn" class="btn-primary" style="background: #27ae60; color: white;">Add to Cart</button>
-            `;
-            modalInfo.appendChild(btnContainer);
-        }
-        document.getElementById('modal-add-cart-btn').setAttribute('onclick', `addToCart('${product._id}')`);
+    // Set Add to Cart button action dynamically
+    const addCartBtn = document.getElementById('modal-add-cart-btn');
+    if (addCartBtn) {
+        addCartBtn.setAttribute('onclick', `addToCart('${product._id}')`);
     }
 
     productModal.style.display = 'flex';
