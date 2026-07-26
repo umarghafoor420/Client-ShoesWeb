@@ -97,7 +97,7 @@ function addToCart(productId) {
 }
 
 function removeFromCart(productId) {
-    cart = cart.filter(item => item !== productId);
+    cart = cart.filter(item => item._id !== productId);
     saveCart();
     updateCartUI();
 }
@@ -155,7 +155,7 @@ function toggleCartModal() {
     }
 }
 
-// Open Checkout Modal from Cart
+// Open Checkout Modal from Cart Drawer
 function checkout() {
     if (cart.length === 0) {
         alert('Your cart is empty!');
@@ -168,18 +168,16 @@ function checkout() {
     }
 }
 
-// Open Checkout Modal Directly from Product Details Modal
+// Open Checkout Modal Directly from Product Details Modal "Place Order" button
+let activeModalProduct = null;
+
 function openCheckoutModalDirect() {
     const productModal = document.getElementById('product-modal');
     if (productModal) productModal.style.display = 'none';
 
-    // Agar product details se directly order karna ho toh current product ko cart mein daal kar checkout khol dein
-    const title = document.getElementById('modal-title').innerText;
-    const product = products.find(p => p.title === title);
-    
-    if (product) {
-        // Clear cart or add single item for direct buy
-        cart = [{ ...product, quantity: 1 }];
+    if (activeModalProduct) {
+        // Is specific product ko temporary cart mein daal kar checkout khol dein
+        cart = [{ ...activeModalProduct, quantity: 1 }];
         saveCart();
         updateCartUI();
     }
@@ -205,7 +203,6 @@ function submitOrderToWhatsApp(e) {
     const phone = document.getElementById('cust-phone').value;
     const address = document.getElementById('cust-address').value;
     const payAccount = document.getElementById('pay-account').value;
-    const screenshotFile = document.getElementById('pay-screenshot').files[0];
 
     if (cart.length === 0) {
         alert('Your cart is empty!');
@@ -233,18 +230,16 @@ function submitOrderToWhatsApp(e) {
     message += `*(Payment Screenshot uploaded by customer)*`;
 
     // Determine target WhatsApp number based on selected account
-    let targetWhatsAppNumber = "923112919430"; // Default Faisal Sheikh
+    let targetWhatsAppNumber = "923112919430"; // Faisal Sheikh
     if (payAccount.includes("0335-2168822")) {
         targetWhatsAppNumber = "923352168822"; // Waqar Sheikh
     }
 
-    // Open WhatsApp with pre-filled message
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${targetWhatsAppNumber}?text=${encodedMessage}`;
 
     alert('Order details prepared! Redirecting to WhatsApp to send message and screenshot.');
     
-    // Clear cart and close modal
     cart = [];
     saveCart();
     updateCartUI();
@@ -261,12 +256,14 @@ const closeBtns = document.querySelectorAll('.close-btn, .close-order-btn');
 
 window.openProductModal = function(index) {
     const product = products[index];
+    activeModalProduct = product; // Save active product reference for direct checkout
+
     document.getElementById('modal-image').src = product.image;
     document.getElementById('modal-title').innerText = product.title;
     document.getElementById('modal-price').innerText = `Rs. ${product.price}`;
     document.getElementById('modal-desc').innerText = product.desc;
     
-    // Details popup ke andar "Add to Cart" button dynamically inject karna
+    // Details popup ke andar "Place Order" aur "Add to Cart" dono buttons ko manage karna
     const modalInfo = document.querySelector('.modal-info');
     if (modalInfo) {
         let existingContainer = document.querySelector('.modal-buttons-container');
@@ -274,6 +271,7 @@ window.openProductModal = function(index) {
             const btnContainer = document.createElement('div');
             btnContainer.className = 'modal-buttons-container';
             btnContainer.innerHTML = `
+                <button class="btn-primary" onclick="openCheckoutModalDirect()">Place Order</button>
                 <button id="modal-add-cart-btn" class="btn-primary" style="background: #27ae60; color: white;">Add to Cart</button>
             `;
             modalInfo.appendChild(btnContainer);
