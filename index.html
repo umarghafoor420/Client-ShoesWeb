@@ -181,10 +181,9 @@
             
             <div style="background: #f1f1f1; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">
                 <p style="font-weight: bold; margin-bottom: 5px; color: #000;">Payment Instructions:</p>
-                <p>1. Send total amount to either account below:</p>
+                <p>1. Send total amount to the account below:</p>
                 <p style="margin-left: 10px;">• <b>JazzCash / EasyPaisa (Faisal Sheikh):</b> 0311-2919430</p>
-                <p style="margin-left: 10px;">• <b>JazzCash / EasyPaisa (Waqar Sheikh):</b> 0335-2168822</p>
-                <p style="margin-top: 5px;">2. Fill your details, upload the payment screenshot, and click Submit to WhatsApp.</p>
+                <p style="margin-top: 5px;">2. Fill your details and click Submit to WhatsApp.</p>
             </div>
 
             <form id="checkout-form" onsubmit="submitOrderToWhatsApp(event)">
@@ -204,12 +203,7 @@
                     <label>Select Payment Account</label>
                     <select id="pay-account" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
                         <option value="Faisal Sheikh (0311-2919430)">Faisal Sheikh - 0311-2919430</option>
-                        <option value="Waqar Sheikh (0335-2168822)">Waqar Sheikh - 0335-2168822</option>
                     </select>
-                </div>
-                <div class="input-group">
-                    <label>Upload Payment Screenshot</label>
-                    <input type="file" id="pay-screenshot" accept="image/*" required>
                 </div>
                 <button type="submit" class="btn-primary" style="width: 100%; background: #25D366; color: white; margin-top: 10px;">
                     <i class="fab fa-whatsapp"></i> Send Order to WhatsApp
