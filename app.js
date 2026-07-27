@@ -68,7 +68,6 @@ function displayProducts() {
             </div>
         `;
 
-        // Direct Event Listeners to ensure clicks work properly
         card.querySelector('.product-image').addEventListener('click', () => openProductModal(index));
         card.querySelector('.product-title').addEventListener('click', () => openProductModal(index));
         card.querySelector('.view-details-btn').addEventListener('click', () => openProductModal(index));
@@ -224,18 +223,14 @@ function submitOrderToWhatsApp(e) {
     message += `• Address: ${address}\n\n`;
     message += `*Order Items:*\n${orderItemsText}\n`;
     message += `*Total Amount:* Rs. ${totalPrice}\n`;
-    message += `*Payment Account:* ${payAccount}\n`;
-    message += `*(Payment Screenshot uploaded by customer)*`;
+    message += `*Payment Account:* ${payAccount}`;
 
-    let targetWhatsAppNumber = "923112919430";
-    if (payAccount.includes("0335-2168822")) {
-        targetWhatsAppNumber = "923352168822";
-    }
+    let targetWhatsAppNumber = "923112919430"; // Faisal Sheikh
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${targetWhatsAppNumber}?text=${encodedMessage}`;
 
-    alert('Order details prepared! Redirecting to WhatsApp to send message and screenshot.');
+    alert('Order details prepared! Redirecting to WhatsApp to send order.');
     
     cart = [];
     saveCart();
@@ -360,7 +355,7 @@ if (productForm) {
 window.deleteProduct = async function(id) {
     if (confirm('Are you sure you want to delete this product?')) {
         try {
-            const response =вал = await fetch(`${API_URL}/${id}`, {
+            const response = await fetch(`${API_URL}/${id}`, {
                 method: 'DELETE'
             });
             
